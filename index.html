@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Martial Arts Tournament Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f7f7f9; color: #1e1e1e; }
+    .container { max-width: 1080px; margin: 2rem auto; padding: 1rem; }
+    .card { background: #fff; border-radius: 10px; padding: 1rem 1.25rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 1rem; }
+    form { display: grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap: 12px 16px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; }
+    input, select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 10px 16px; border: none; border-radius: 8px; background: #0b61d8; color: white; font-weight: 700; cursor: pointer; }
+    .flash { background: #f0f6ff; border: 1px solid #b7d1ff; color: #18448b; border-radius: 8px; padding: 10px; margin-bottom: 12px; display:none; }
+    .flash.error { background: #fff2f2; border-color: #ffbdbd; color: #8d1b1b; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { border-bottom: 1px solid #e8e8e8; padding: 8px; text-align: left; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Martial Arts Tournament Result Tracker</h1>
+      <div id="flash" class="flash"></div>
+
+      <form id="resultForm" enctype="multipart/form-data">
+        <div><label>Tournament Name</label><input name="tournament_name" required /></div>
+        <div><label>Date</label><input name="tournament_date" type="date" required /></div>
+        <div>
+          <label>Event</label>
+          <select id="event_type" name="event_type" required>
+            <option value="">Select event...</option>
+            <option value="forms">Forms</option><option value="weapons">Weapons</option>
+            <option value="combat">Combat</option><option value="sparring">Sparring</option>
+            <option value="creative form">Creative Form</option><option value="creative weapon">Creative Weapon</option>
+            <option value="xtreme form">Xtreme Form</option><option value="xtreme weapon">Xtreme Weapon</option>
+          </select>
+        </div>
+        <div><label>Opponent (sparring/combat)</label><input id="opponent" name="opponent" /></div>
+        <div><label>Final Result</label><select name="placement" required><option value="">Select...</option><option value="1st">1st</option><option value="2nd">2nd</option><option value="3rd">3rd</option></select></div>
+        <div><label>Tournament Class</label><select name="tournament_class" required><option value="">Select...</option><option value="local">Local (x1)</option><option value="regional">Regional (x2)</option><option value="state">State (x3)</option><option value="national">National (x4)</option></select></div>
+        <div><label>Judge 1</label><input id="judge1_name" name="judge1_name" /></div>
+        <div><label>Score 1 (0-9)</label><input id="score1" name="score1" type="number" min="0" max="9" step="0.1" /></div>
+        <div><label>Judge 2</label><input id="judge2_name" name="judge2_name" /></div>
+        <div><label>Score 2 (0-9)</label><input id="score2" name="score2" type="number" min="0" max="9" step="0.1" /></div>
+        <div><label>Judge 3</label><input id="judge3_name" name="judge3_name" /></div>
+        <div><label>Score 3 (0-9)</label><input id="score3" name="score3" type="number" min="0" max="9" step="0.1" /></div>
+        <div class="full"><label>Upload Video</label><input name="video" type="file" accept="video/*" required /></div>
+        <div class="full"><button type="submit">Save Tournament Result</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Saved Results</h2>
+      <table>
+        <thead><tr><th>Tournament</th><th>Date</th><th>Event</th><th>Opponent</th><th>Judges / Scores</th><th>Placement</th><th>Class</th><th>Points</th><th>Video</th></tr></thead>
+        <tbody id="resultsBody"><tr><td colspan="9">No results saved yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const formEvents = new Set(["forms", "weapons", "creative form", "creative weapon", "xtreme form", "xtreme weapon"]);
+    const matchEvents = new Set(["sparring", "combat"]);
+    const eventSelect = document.getElementById("event_type");
+    const opponentInput = document.getElementById("opponent");
+    const judgeInputs = ["judge1_name", "judge2_name", "judge3_name", "score1", "score2", "score3"].map((id) => document.getElementById(id));
+    const flash = document.getElementById("flash");
+    const form = document.getElementById("resultForm");
+    const resultsBody = document.getElementById("resultsBody");
+
+    function setFlash(message, isError = false) {
+      flash.textContent = message;
+      flash.classList.toggle("error", isError);
+      flash.style.display = "block";
+    }
+
+    function refreshConditionalFields() {
+      const event = eventSelect.value;
+      opponentInput.required = matchEvents.has(event);
+      judgeInputs.forEach((input) => { input.required = formEvents.has(event); });
+    }
+
+    function renderResults(rows) {
+      if (!rows.length) {
+        resultsBody.innerHTML = '<tr><td colspan="9">No results saved yet.</td></tr>';
+        return;
+      }
+      resultsBody.innerHTML = rows.map((row) => {
+        const judges = row.score1 !== null
+          ? `${row.judge1_name || ''}: ${row.score1}<br>${row.judge2_name || ''}: ${row.score2}<br>${row.judge3_name || ''}: ${row.score3}`
+          : '-';
+        return `<tr>
+          <td>${row.tournament_name}</td>
+          <td>${row.tournament_date}</td>
+          <td>${row.event_type}</td>
+          <td>${row.opponent || '-'}</td>
+          <td>${judges}</td>
+          <td>${row.placement}</td>
+          <td>${row.tournament_class}</td>
+          <td>${row.tournament_points}</td>
+          <td><a href="${row.video_url}" target="_blank">View</a></td>
+        </tr>`;
+      }).join("");
+    }
+
+    async function loadResults() {
+      const res = await fetch('/api/results');
+      const data = await res.json();
+      renderResults(data);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const res = await fetch('/api/results', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setFlash(data.error || 'Failed to save result.', true);
+        return;
+      }
+      setFlash(data.message || 'Saved successfully.');
+      form.reset();
+      refreshConditionalFields();
+      await loadResults();
+    });
+
+    eventSelect.addEventListener("change", refreshConditionalFields);
+    refreshConditionalFields();
+    loadResults();
+  </script>
+</body>
+</html>

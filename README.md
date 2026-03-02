@@ -1,24 +1,32 @@
 # Tournament MVP
 
-Simple Python web app to track and store martial arts tournament results, including uploaded videos.
+Simple HTML web app to track and store martial arts tournament results (including uploaded video) locally in your browser.
 
 ## Features
-- Upload and store a tournament video file.
-- Tag result by tournament name, date, and event:
-  - forms, weapons, combat, sparring, creative form, creative weapon, xtreme form, xtreme weapon
+- Upload a video for each result entry.
+- Tag each result with:
+  - tournament name
+  - date
+  - event (forms, weapons, combat, sparring, creative form, creative weapon, xtreme form, xtreme weapon)
 - Opponent field required for sparring/combat.
-- Three judges + three scores (0-9) required for form/weapon events.
-- Final result (1st/2nd/3rd).
+- Three judge names + three scores (0-9) required for forms/weapon categories.
+- Final placement: 1st / 2nd / 3rd.
 - Tournament class with auto-calculated points.
-- Saved results table with direct video links.
+- Saved results table with video links.
 
 ## Run locally
+No build step is required.
+
+- Option 1: Open `index.html` directly in a browser.
+- Option 2 (recommended): serve with Python:
+
 ```bash
-python app.py
+python -m http.server 8000
 ```
 
-Then open: http://localhost:5000
+Then open http://localhost:8000.
 
-## Notes
-- Data is saved in SQLite (`tournament_results.db`).
-- Uploaded videos are saved in `uploads/`.
+## Data storage
+- Results are saved in `localStorage` in your browser.
+- Uploaded videos are stored as data URLs in browser storage for this site.
+- Storage size depends on browser limits.

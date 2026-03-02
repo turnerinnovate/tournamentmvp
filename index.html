@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Martial Arts Tournament Tracker</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6fa; color: #1f2937; }
+    .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 14px rgba(0,0,0,0.08); padding: 1rem 1.2rem; margin-bottom: 1rem; }
+    h1, h2 { margin: 0 0 0.8rem; }
+    p { margin-top: 0; }
+    form { display: grid; grid-template-columns: repeat(2, minmax(250px, 1fr)); gap: 12px; }
+    .full { grid-column: 1 / -1; }
+    label { font-size: 0.9rem; font-weight: 700; display: block; margin-bottom: 4px; }
+    input, select { width: 100%; padding: 8px 10px; border: 1px solid #d0d7de; border-radius: 8px; font-size: 0.95rem; }
+    input[type="file"] { padding: 6px; }
+    .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    button { border: none; background: #0d6efd; color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    button:hover { background: #0b5ed7; }
+    .muted { color: #6b7280; font-size: 0.85rem; }
+    .flash { padding: 0.7rem 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; font-weight: 700; }
+    .ok { background: #e8f7eb; color: #166534; border: 1px solid #b7ebc2; }
+    .err { background: #fdeaea; color: #991b1b; border: 1px solid #f7b7b7; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Martial Arts Tournament Result Tracker</h1>
+      <p>Runs as a single HTML file. All records are stored in your browser (localStorage) on this machine.</p>
+      <div id="flash"></div>
+      <form id="result-form">
+        <div>
+          <label for="tournament_name">Tournament Name</label>
+          <input id="tournament_name" name="tournament_name" required />
+        </div>
+        <div>
+          <label for="tournament_date">Date</label>
+          <input id="tournament_date" name="tournament_date" type="date" required />
+        </div>
+        <div>
+          <label for="event_type">Event</label>
+          <select id="event_type" name="event_type" required>
+            <option value="">Select event</option>
+            <option>forms</option>
+            <option>weapons</option>
+            <option>combat</option>
+            <option>sparring</option>
+            <option>creative form</option>
+            <option>creative weapon</option>
+            <option>xtreme form</option>
+            <option>xtreme weapon</option>
+          </select>
+        </div>
+        <div>
+          <label for="opponent">Opponent (combat/sparring)</label>
+          <input id="opponent" name="opponent" />
+        </div>
+
+        <div class="full" id="judges-block">
+          <label>Judges + Scores (forms/weapons categories only, each score 0-9)</label>
+          <div class="row3">
+            <input id="judge1_name" placeholder="Judge 1 Name" />
+            <input id="judge2_name" placeholder="Judge 2 Name" />
+            <input id="judge3_name" placeholder="Judge 3 Name" />
+          </div>
+          <div class="row3" style="margin-top:8px;">
+            <input id="score1" type="number" min="0" max="9" step="0.1" placeholder="Score 1" />
+            <input id="score2" type="number" min="0" max="9" step="0.1" placeholder="Score 2" />
+            <input id="score3" type="number" min="0" max="9" step="0.1" placeholder="Score 3" />
+          </div>
+        </div>
+
+        <div>
+          <label for="placement">Final Result</label>
+          <select id="placement" required>
+            <option value="">Select placement</option>
+            <option>1st</option>
+            <option>2nd</option>
+            <option>3rd</option>
+          </select>
+        </div>
+        <div>
+          <label for="tournament_class">Tournament Class</label>
+          <select id="tournament_class" required>
+            <option value="">Select class</option>
+            <option value="intra school">Intra school</option>
+            <option value="regional b">Regional B</option>
+            <option value="regional a">Regional A</option>
+            <option value="nationals">Nationals</option>
+            <option value="worlds">Worlds</option>
+          </select>
+        </div>
+        <div>
+          <label for="points">Tournament Points</label>
+          <input id="points" readonly placeholder="Auto-calculated" />
+        </div>
+        <div>
+          <label for="video">Upload Video</label>
+          <input id="video" type="file" accept="video/*" />
+          <div class="muted">Video is stored in your browser data for this site.</div>
+        </div>
+
+        <div class="full">
+          <button type="submit">Save Result</button>
+          <button id="clear-all" type="button" style="margin-left:8px;background:#dc3545;">Clear All Stored Results</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Saved Results</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Tournament</th><th>Date</th><th>Event</th><th>Opponent</th><th>Judges/Scores</th>
+              <th>Placement</th><th>Class</th><th>Points</th><th>Video</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <tr><td colspan="9">No saved results yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY = "martial-arts-tournament-results-v1";
+const FORM_EVENTS = new Set(["forms","weapons","creative form","creative weapon","xtreme form","xtreme weapon"]);
+const MATCH_EVENTS = new Set(["sparring","combat"]);
+const CLASS_POINTS = {
+  "intra school": {"1st": 3, "2nd": 2, "3rd": 1},
+  "regional b": {"1st": 5, "2nd": 3, "3rd": 1},
+  "regional a": {"1st": 8, "2nd": 5, "3rd": 3},
+  "nationals": {"1st": 15, "2nd": 10, "3rd": 5},
+  "worlds": {"1st": 20, "2nd": 15, "3rd": 10}
+};
+
+const form = document.getElementById("result-form");
+const eventType = document.getElementById("event_type");
+const opponent = document.getElementById("opponent");
+const judgesBlock = document.getElementById("judges-block");
+const judge1 = document.getElementById("judge1_name");
+const judge2 = document.getElementById("judge2_name");
+const judge3 = document.getElementById("judge3_name");
+const score1 = document.getElementById("score1");
+const score2 = document.getElementById("score2");
+const score3 = document.getElementById("score3");
+const placement = document.getElementById("placement");
+const tournamentClass = document.getElementById("tournament_class");
+const pointsInput = document.getElementById("points");
+const videoInput = document.getElementById("video");
+const flash = document.getElementById("flash");
+const resultsBody = document.getElementById("results-body");
+
+function showMessage(msg, ok = true) {
+  flash.innerHTML = `<div class="flash ${ok ? "ok" : "err"}">${msg}</div>`;
+}
+
+function updateConditionalFields() {
+  const event = eventType.value;
+  const isFormEvent = FORM_EVENTS.has(event);
+  const isMatchEvent = MATCH_EVENTS.has(event);
+
+  judgesBlock.classList.toggle("hidden", !isFormEvent);
+  [judge1, judge2, judge3, score1, score2, score3].forEach((el) => {
+    el.required = isFormEvent;
+    el.disabled = !isFormEvent;
+  });
+  opponent.required = isMatchEvent;
+}
+
+function computePoints() {
+  const classPoints = CLASS_POINTS[tournamentClass.value];
+  const points = classPoints ? classPoints[placement.value] : 0;
+  pointsInput.value = points ? String(points) : "";
+}
+
+function getStored() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
+
+function saveStored(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function safe(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderTable() {
+  const rows = getStored();
+  if (!rows.length) {
+    resultsBody.innerHTML = `<tr><td colspan="9">No saved results yet.</td></tr>`;
+    return;
+  }
+
+  resultsBody.innerHTML = rows.map((r, i) => {
+    const judgeText = r.score1 !== null
+      ? `${safe(r.judge1_name)}: ${r.score1}<br>${safe(r.judge2_name)}: ${r.score2}<br>${safe(r.judge3_name)}: ${r.score3}`
+      : "-";
+
+    return `<tr>
+      <td>${safe(r.tournament_name)}</td>
+      <td>${safe(r.tournament_date)}</td>
+      <td>${safe(r.event_type)}</td>
+      <td>${safe(r.opponent || "-")}</td>
+      <td>${judgeText}</td>
+      <td>${safe(r.placement)}</td>
+      <td>${safe(r.tournament_class)}</td>
+      <td>${safe(r.tournament_points)}</td>
+      <td>${r.video_data ? `<a href="${r.video_data}" target="_blank">View</a>` : "-"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read uploaded video."));
+    reader.readAsDataURL(file);
+  });
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const event = eventType.value;
+  const isFormEvent = FORM_EVENTS.has(event);
+  const isMatchEvent = MATCH_EVENTS.has(event);
+
+  if (!event) return showMessage("Please select an event.", false);
+  if (isMatchEvent && !opponent.value.trim()) return showMessage("Opponent is required for sparring/combat.", false);
+
+  let parsedScores = [null, null, null];
+  if (isFormEvent) {
+    const scores = [score1.value, score2.value, score3.value].map(Number);
+    if (!judge1.value.trim() || !judge2.value.trim() || !judge3.value.trim()) {
+      return showMessage("All 3 judge names are required for forms/weapon events.", false);
+    }
+    if (scores.some((s) => Number.isNaN(s) || s < 0 || s > 9)) {
+      return showMessage("Scores must be numbers between 0 and 9.", false);
+    }
+    parsedScores = scores;
+  }
+
+  computePoints();
+  if (!pointsInput.value) return showMessage("Placement and class are required to calculate points.", false);
+
+  const file = videoInput.files[0];
+
+  let videoData = null;
+  if (file) {
+    try {
+      videoData = await fileToDataUrl(file);
+    } catch (err) {
+      return showMessage(err.message || "Video upload failed.", false);
+    }
+  }
+
+  const records = getStored();
+  records.unshift({
+    id: Date.now(),
+    tournament_name: document.getElementById("tournament_name").value.trim(),
+    tournament_date: document.getElementById("tournament_date").value,
+    event_type: event,
+    opponent: opponent.value.trim(),
+    judge1_name: judge1.value.trim(),
+    judge2_name: judge2.value.trim(),
+    judge3_name: judge3.value.trim(),
+    score1: parsedScores[0],
+    score2: parsedScores[1],
+    score3: parsedScores[2],
+    placement: placement.value,
+    tournament_class: tournamentClass.value,
+    tournament_points: Number(pointsInput.value),
+    video_name: file ? file.name : null,
+    video_data: videoData
+  });
+
+  try {
+    saveStored(records);
+  } catch (err) {
+    return showMessage(
+      "Could not save result. Video files can exceed browser storage limits; try a smaller/compressed video.",
+      false
+    );
+  }
+  form.reset();
+  pointsInput.value = "";
+  updateConditionalFields();
+  renderTable();
+  showMessage("Result saved locally.");
+});
+
+[eventType, placement, tournamentClass].forEach((el) => el.addEventListener("change", () => {
+  updateConditionalFields();
+  computePoints();
+}));
+
+document.getElementById("clear-all").addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  renderTable();
+  showMessage("All stored results cleared.");
+});
+
+updateConditionalFields();
+computePoints();
+renderTable();
+</script>
+</body>
+</html>

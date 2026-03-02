@@ -168,6 +168,7 @@ function updateConditionalFields() {
   judgesBlock.classList.toggle("hidden", !isFormEvent);
   [judge1, judge2, judge3, score1, score2, score3].forEach((el) => {
     el.required = isFormEvent;
+    el.disabled = !isFormEvent;
   });
   opponent.required = isMatchEvent;
 }
@@ -187,7 +188,10 @@ function saveStored(data) {
 }
 
 function safe(text) {
-  return String(text || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function renderTable() {
@@ -279,7 +283,14 @@ form.addEventListener("submit", async (e) => {
     video_data: videoData
   });
 
-  saveStored(records);
+  try {
+    saveStored(records);
+  } catch (err) {
+    return showMessage(
+      "Could not save result. Video files can exceed browser storage limits; try a smaller/compressed video.",
+      false
+    );
+  }
   form.reset();
   pointsInput.value = "";
   updateConditionalFields();

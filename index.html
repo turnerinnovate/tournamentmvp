@@ -91,10 +91,11 @@
           <label for="tournament_class">Tournament Class</label>
           <select id="tournament_class" required>
             <option value="">Select class</option>
-            <option value="local">Local</option>
-            <option value="regional">Regional</option>
-            <option value="state">State</option>
-            <option value="national">National</option>
+            <option value="intra school">Intra school</option>
+            <option value="regional b">Regional B</option>
+            <option value="regional a">Regional A</option>
+            <option value="nationals">Nationals</option>
+            <option value="worlds">Worlds</option>
           </select>
         </div>
         <div>
@@ -103,7 +104,7 @@
         </div>
         <div>
           <label for="video">Upload Video</label>
-          <input id="video" type="file" accept="video/*" required />
+          <input id="video" type="file" accept="video/*" />
           <div class="muted">Video is stored in your browser data for this site.</div>
         </div>
 
@@ -136,8 +137,13 @@
 const STORAGE_KEY = "martial-arts-tournament-results-v1";
 const FORM_EVENTS = new Set(["forms","weapons","creative form","creative weapon","xtreme form","xtreme weapon"]);
 const MATCH_EVENTS = new Set(["sparring","combat"]);
-const PLACEMENT_POINTS = {"1st":10,"2nd":7,"3rd":5};
-const CLASS_MULTIPLIERS = {local:1,regional:2,state:3,national:4};
+const CLASS_POINTS = {
+  "intra school": {"1st": 3, "2nd": 2, "3rd": 1},
+  "regional b": {"1st": 5, "2nd": 3, "3rd": 1},
+  "regional a": {"1st": 8, "2nd": 5, "3rd": 3},
+  "nationals": {"1st": 15, "2nd": 10, "3rd": 5},
+  "worlds": {"1st": 20, "2nd": 15, "3rd": 10}
+};
 
 const form = document.getElementById("result-form");
 const eventType = document.getElementById("event_type");
@@ -174,9 +180,9 @@ function updateConditionalFields() {
 }
 
 function computePoints() {
-  const base = PLACEMENT_POINTS[placement.value] || 0;
-  const mult = CLASS_MULTIPLIERS[tournamentClass.value] || 0;
-  pointsInput.value = base && mult ? String(base * mult) : "";
+  const classPoints = CLASS_POINTS[tournamentClass.value];
+  const points = classPoints ? classPoints[placement.value] : 0;
+  pointsInput.value = points ? String(points) : "";
 }
 
 function getStored() {
@@ -254,13 +260,14 @@ form.addEventListener("submit", async (e) => {
   if (!pointsInput.value) return showMessage("Placement and class are required to calculate points.", false);
 
   const file = videoInput.files[0];
-  if (!file) return showMessage("Please upload a video.", false);
 
-  let videoData;
-  try {
-    videoData = await fileToDataUrl(file);
-  } catch (err) {
-    return showMessage(err.message || "Video upload failed.", false);
+  let videoData = null;
+  if (file) {
+    try {
+      videoData = await fileToDataUrl(file);
+    } catch (err) {
+      return showMessage(err.message || "Video upload failed.", false);
+    }
   }
 
   const records = getStored();
@@ -279,7 +286,7 @@ form.addEventListener("submit", async (e) => {
     placement: placement.value,
     tournament_class: tournamentClass.value,
     tournament_points: Number(pointsInput.value),
-    video_name: file.name,
+    video_name: file ? file.name : null,
     video_data: videoData
   });
 
